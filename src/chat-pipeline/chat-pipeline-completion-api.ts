@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { parseInput } from "./stages/parse-input";
 import { ChatPipelineParameters } from "./ChatPipelineParameters";
 import { initialInput } from "./stages/initial-input";
@@ -17,9 +18,18 @@ export async function executeChatPipeline(parameters: ChatPipelineParameters) {
   const { executionContext, chatContext } = parameters;
   const config = parameters.executionContext.config;
   const params = { ...parameters, config };
+
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy;
+  let agent;
+  if (proxyUrl) {
+    agent = new HttpsProxyAgent(proxyUrl);
+  } else {
+    console.log("未检测到 HTTPS_PROXY 环境变量，未启用代理");
+  }
   const openai = new OpenAI({
     apiKey: parameters.executionContext.provider.apiKey,
     baseURL: parameters.executionContext.provider.baseURL,
+    ...(agent ? { httpAgent: agent, httpsAgent: agent } : {}),
   });
 
   //  Get all context prompts and add them to a new conversation.

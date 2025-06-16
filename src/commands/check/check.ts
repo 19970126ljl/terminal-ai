@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { ExecutionContext } from "../../execution-context/execution-context";
 import { checkLangfuse } from "./check-04-langfuse";
 import { checkOpenAIKey } from "./check-01-openai-key";
@@ -12,9 +13,17 @@ export async function check(executionContext: ExecutionContext) {
   const provider = executionContext.provider;
 
   //  Create the OpenAI instance we'll use for a lot of the rest of the checks.
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy;
+  let agent;
+  if (proxyUrl) {
+    agent = new HttpsProxyAgent(proxyUrl);
+  } else {
+    console.log("未检测到 HTTPS_PROXY 环境变量，未启用代理");
+  }
   const openai = new OpenAI({
     apiKey: executionContext.provider.apiKey,
     baseURL: executionContext.provider.baseURL,
+    ...(agent ? { httpAgent: agent, httpsAgent: agent } : {}),
   });
 
   await checkConnection(interactive);
