@@ -1,0 +1,3 @@
+[submodule "terminal-ai"]
+	path = terminal-ai
+	url = https://github.com/dwmkerr/terminal-ai.git
